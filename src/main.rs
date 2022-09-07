@@ -4,8 +4,10 @@ use lambda_http::{
     request::RequestContext,
     run, service_fn, Body, Error, Request, RequestExt, Response,
 };
+use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use simplelog::{CombinedLogger, ConfigBuilder, TermLogger};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct RateInfo {
@@ -29,28 +31,40 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         Ok(l) => l.table_names.unwrap()[0].clone(),
         Err(e) => e.to_string(),
     };
-    let request = client
-        .put_item()
-        .table_name(&list_tables)
-        .item(
-            "user_id",
-            AttributeValue::S(uuid::Uuid::new_v4().to_string()),
-        )
-        .item("name", AttributeValue::S("kona".to_string()))
-        .item("rate", AttributeValue::N(4440.to_string()));
-    request.send().await.unwrap();
+    // let request = client
+    //     .put_item()
+    //     .table_name(&list_tables)
+    //     .item(
+    //         "user_id",
+    //         AttributeValue::S(uuid::Uuid::new_v4().to_string()),
+    //     )
+    //     .item("name", AttributeValue::S("kona".to_string()))
+    //     .item("rate", AttributeValue::N(4440.to_string()));
+    // request.send().await.unwrap();
 
-    let item = client.get_item().table_name(&list_tables).key(
-        "user_id",
-        AttributeValue::S("99315bb2-c1eb-4875-9080-67f41281ea7c".to_string()),
-    );
-    let item = item.send().await?;
-    dbg!(item.item);
+    // let item = client.get_item().table_name(&list_tables).key(
+    //     "user_id",
+    //     AttributeValue::S("99315bb2-c1eb-4875-9080-67f41281ea7c".to_string()),
+    // );
+    // let item = item.send().await?;
+    // dbg!(item.item);
     let name = "";
+    log::debug!("[body] {:#?}", event.body());
+    let mut route_key = String::new();
 
     // Extract some useful information from the request
     let resource_path = if let RequestContext::ApiGatewayV2(http_context) = event.request_context()
     {
+        log::debug!("[domain_name] {:#?}", http_context.domain_name.unwrap());
+        log::debug!("[domain_prefix] {:#?}", http_context.domain_prefix.unwrap());
+        log::debug!(
+            "[route_key] {:#?}",
+            http_context.route_key.as_ref().unwrap()
+        );
+        route_key = http_context.route_key.unwrap();
+        log::debug!("[stage] {:#?}", http_context.stage.unwrap());
+        log::debug!("[time] {:#?}", http_context.time.unwrap());
+        log::debug!("[time_epoch] {:#?}", http_context.time_epoch);
         http_context.http.path.unwrap()
     } else {
         unreachable!()
@@ -74,7 +88,8 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
                 "resource_path": resource_path,
                 "tables": list_tables,
                 "region": region,
-                "name": name
+                "name": name,
+                "route_key": route_key
             })
             .to_string()
             .into(),
@@ -85,6 +100,24 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    CombinedLogger::init(vec![TermLogger::new(
+        if cfg!(debug_assertions) {
+            LevelFilter::Debug
+        } else {
+            LevelFilter::Info
+        },
+        ConfigBuilder::default().build(),
+        simplelog::TerminalMode::Mixed,
+        simplelog::ColorChoice::Always,
+    )])
+    .unwrap();
+
+    if cfg!(debug_assertions) {
+        log::info!("Debug mode");
+    } else {
+        log::info!("Release mode");
+    }
+
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         // disable printing the name of the module in every log line.
