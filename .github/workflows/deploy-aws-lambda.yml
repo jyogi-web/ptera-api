@@ -79,51 +79,58 @@ jobs:
             ./**/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-build-deploy
 
-      - name: install lambda
+      - name: Install zig
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "npm"
+      - run: npm install -g @ziglang/cli
+
+      - name: Install lambda
         if: steps.cache-build-deploy.outputs.cache-hit != 'true'
         uses: actions-rs/cargo@v1
         with:
           command: install
           args: cargo-lambda
 
-      # - name: lambda build
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: lambda
-      #     args: build --release --arm64
+      - name: Lambda build
+        uses: actions-rs/cargo@v1
+        with:
+          command: lambda
+          args: build --release --arm64
 
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ap-northeast-1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
 
-      # - name: decode secret file .env
-      #   env:
-      #     DOTENV_ENCODE: ${{ secrets.DOTENV_ENCODED }}
-      #   run: echo $DOTEND_ENCODE | base64 --decode > .env
+      - name: Decode secret file .env
+        env:
+          DOTENV_ENCODE: ${{ secrets.DOTENV_ENCODED }}
+        run: echo $DOTEND_ENCODE | base64 --decode > .env
 
-      # - name: lambda deploy
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: lambda
-      #     args: deploy --iam-role ${{ secrets.IAM }} --env-file .env
+      - name: Lambda deploy
+        uses: actions-rs/cargo@v1
+        with:
+          command: lambda
+          args: deploy --iam-role ${{ secrets.IAM }} --env-file .env
 
-      # - name: Bump version and push tag
-      #   uses: mathieudutour/github-tag-action@v6.0
-      #   id: tag_version
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Bump version and push tag
+        uses: mathieudutour/github-tag-action@v6.0
+        id: tag_version
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: create release
-      #   uses: actions/create-release@v1
-      #   id: create_release
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ steps.tag_version.outputs.new_tag }}
-      #     release_name: Release ${{ steps.tag_version.outputs.new_tag }}
-      #     draft: false
-      #     prerelease: false
-      #     body: ${{ steps.tag_version.outputs.changelog }}
+      - name: Create release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          release_name: Release ${{ steps.tag_version.outputs.new_tag }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.tag_version.outputs.changelog }}
