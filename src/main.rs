@@ -8,6 +8,7 @@ use lambda_http::{
 };
 use log::LevelFilter;
 use once_cell::sync::Lazy;
+use ptera_api::CONFIG;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -25,9 +26,6 @@ struct RateInfo {
 /// There are some code example in the following URLs:
 /// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
 async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    let region = env::var("region").unwrap_or_default();
-    let table_name = env::var("table_name").unwrap();
-
     let shared_config = aws_config::load_from_env().await;
     let client = Client::new(&shared_config);
 
@@ -102,7 +100,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
                 "path_param": event.path_parameters(),
                 "resource_path": resource_path,
                 "tables": "ptera-api",
-                "region": region,
+                "region": CONFIG.region,
                 "name": name,
                 "route_key": route_key
             })
