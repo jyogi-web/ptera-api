@@ -7,6 +7,8 @@ use lambda_http::{
     run, service_fn, Body, Error, Request, RequestExt, Response,
 };
 use log::LevelFilter;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use simplelog::{CombinedLogger, ConfigBuilder, TermLogger};
@@ -68,9 +70,24 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         unreachable!()
     };
 
-    match (event.method(), resource_path.as_ref()) {
-        (&Method::GET, "/dev/rate") => {}
-        _ => (),
+    static RE: Lazy<Regex> = Lazy::new(|| Regex::new("^/.*/rate").unwrap());
+
+    if RE.is_match(&resource_path) {
+        match event.method() {
+            &Method::GET => {
+                log::debug!("GET /rate");
+            }
+            &Method::POST => {
+                log::debug!("POST /rate");
+            }
+            &Method::PUT => {
+                log::debug!("PUT /rate");
+            }
+            &Method::DELETE => {
+                log::debug!("DELETE /rate");
+            }
+            _ => (),
+        }
     }
 
     // Return something that implements IntoResponse.
