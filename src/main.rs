@@ -26,11 +26,11 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     let shared_config = aws_config::load_from_env().await;
     let client = Client::new(&shared_config);
     let req = client.list_tables().limit(10);
-    let list_tables = req.send().await;
-    let list_tables = match list_tables {
-        Ok(l) => l.table_names.unwrap()[0].clone(),
-        Err(e) => e.to_string(),
-    };
+    // let list_tables = req.send().await;
+    // let list_tables = match list_tables {
+    //     Ok(l) => l.table_names.unwrap()[0].clone(),
+    //     Err(e) => e.to_string(),
+    // };
     // let request = client
     //     .put_item()
     //     .table_name(&list_tables)
@@ -86,7 +86,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
                 "method": event.method().as_ref(),
                 "path_param": event.path_parameters(),
                 "resource_path": resource_path,
-                "tables": list_tables,
+                "tables": "ptera-api",
                 "region": region,
                 "name": name,
                 "route_key": route_key
