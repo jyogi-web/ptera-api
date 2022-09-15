@@ -1,3 +1,5 @@
+pub mod service_handler;
+
 use dotenv::dotenv;
 use once_cell::sync::Lazy;
 use serde::Deserialize;

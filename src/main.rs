@@ -8,7 +8,7 @@ use lambda_http::{
 };
 use log::LevelFilter;
 use once_cell::sync::Lazy;
-use ptera_api::CONFIG;
+use ptera_api::{service_handler::get_rate, CONFIG};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -46,76 +46,73 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     // );
     // let item = item.send().await?;
     // dbg!(item.item);
-    let name = "";
-    log::debug!("[body] {:#?}", event.body());
-    let mut route_key = String::new();
 
     // Extract some useful information from the request
     let resource_path = if let RequestContext::ApiGatewayV2(http_context) = event.request_context()
     {
-        log::debug!("[domain_name] {:#?}", http_context.domain_name.unwrap());
-        log::debug!("[domain_prefix] {:#?}", http_context.domain_prefix.unwrap());
-        log::debug!(
-            "[route_key] {:#?}",
-            http_context.route_key.as_ref().unwrap()
-        );
-        route_key = http_context.route_key.unwrap();
-        log::debug!("[stage] {:#?}", http_context.stage.unwrap());
-        log::debug!("[time] {:#?}", http_context.time.unwrap());
-        log::debug!("[time_epoch] {:#?}", http_context.time_epoch);
         http_context.http.path.unwrap()
     } else {
         unreachable!()
     };
 
-    static RE: Lazy<Regex> = Lazy::new(|| Regex::new("^/.*/rate").unwrap());
+    static RATE: Lazy<Regex> = Lazy::new(|| Regex::new("^/.*/rate").unwrap());
 
-    if RE.is_match(&resource_path) {
-        match event.method() {
-            &Method::GET => {
-                log::debug!("GET /rate");
-            }
-            &Method::POST => {
-                log::debug!("POST /rate");
-            }
-            &Method::PUT => {
-                log::debug!("PUT /rate");
-            }
-            &Method::DELETE => {
-                log::debug!("DELETE /rate");
-            }
-            _ => (),
+    let resp = match (event.method(), RATE.is_match(&resource_path)) {
+        (&Method::GET, true) => {
+            log::debug!("GET /rate");
+            get_rate(&event)?
         }
-    }
+        (&Method::POST, true) => {
+            log::debug!("POST /rate");
+            todo!()
+        }
+        (&Method::PUT, true) => {
+            log::debug!("PUT /rate");
+            todo!()
+        }
+        (&Method::DELETE, true) => {
+            log::debug!("DELETE /rate");
+            todo!()
+        }
+        _ => Response::builder()
+            .status(200)
+            .header("content-type", "application/json")
+            .body(
+                json!({
+                    "message": "This method or path is not support."
+                })
+                .to_string()
+                .into(),
+            )
+            .map_err(Box::new)?,
+    };
 
+    Ok(resp)
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
-    let resp = Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(
-            json!({
-                "message": "This is a Rust server!",
-                "method": event.method().as_ref(),
-                "path_param": event.path_parameters(),
-                "resource_path": resource_path,
-                "tables": "ptera-api",
-                "region": CONFIG.region,
-                "name": name,
-                "route_key": route_key
-            })
-            .to_string()
-            .into(),
-        )
-        .map_err(Box::new)?;
-    Ok(resp)
+    // let resp = Response::builder()
+    //     .status(200)
+    //     .header("content-type", "application/json")
+    //     .body(
+    //         json!({
+    //             "message": "This is a Rust server!",
+    //             "method": event.method().as_ref(),
+    //             "path_param": event.path_parameters(),
+    //             "resource_path": resource_path,
+    //             "tables": "ptera-api",
+    //             "region": CONFIG.region,
+    //             "name": name,
+    //             "route_key": route_key
+    //         })
+    //         .to_string()
+    //         .into(),
+    //     )
+    //     .map_err(Box::new)?;
+    // Ok(resp)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    if cfg!(debug_assertions) {
-        dotenv::dotenv().unwrap();
-    }
     CombinedLogger::init(vec![TermLogger::new(
         if cfg!(debug_assertions) {
             LevelFilter::Debug
