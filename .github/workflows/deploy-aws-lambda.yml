@@ -86,10 +86,6 @@ jobs:
           command: install
           args: cargo-lambda
 
-      - name: build
-        run: |
-          lambda build --release
-
       - name: lambda build
         uses: actions-rs/cargo@v1
         with:
