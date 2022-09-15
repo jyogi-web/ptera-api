@@ -1,3 +1,5 @@
+use std::env;
+
 use aws_sdk_dynamodb::{model::AttributeValue, Client};
 use lambda_http::{
     http::{request, Method},
@@ -21,19 +23,15 @@ struct RateInfo {
 /// There are some code example in the following URLs:
 /// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
 async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    let region = std::env::var("region").unwrap_or_default();
+    let region = env::var("region").unwrap_or_default();
+    let table_name = env::var("table_name").unwrap();
 
     let shared_config = aws_config::load_from_env().await;
     let client = Client::new(&shared_config);
-    let req = client.list_tables().limit(10);
-    // let list_tables = req.send().await;
-    // let list_tables = match list_tables {
-    //     Ok(l) => l.table_names.unwrap()[0].clone(),
-    //     Err(e) => e.to_string(),
-    // };
+
     // let request = client
     //     .put_item()
-    //     .table_name(&list_tables)
+    //     .table_name(&table_name)
     //     .item(
     //         "user_id",
     //         AttributeValue::S(uuid::Uuid::new_v4().to_string()),
@@ -42,7 +40,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     //     .item("rate", AttributeValue::N(4440.to_string()));
     // request.send().await.unwrap();
 
-    // let item = client.get_item().table_name(&list_tables).key(
+    // let item = client.get_item().table_name(&table_name).key(
     //     "user_id",
     //     AttributeValue::S("99315bb2-c1eb-4875-9080-67f41281ea7c".to_string()),
     // );
@@ -100,6 +98,9 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    if cfg!(debug_assertions) {
+        dotenv::dotenv().unwrap();
+    }
     CombinedLogger::init(vec![TermLogger::new(
         if cfg!(debug_assertions) {
             LevelFilter::Debug
