@@ -1,0 +1,16 @@
+{
+  "name": "ptera-api",
+  "version": "1.0.0",
+  "description": "## Development Environment",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jyogi-web/ptera-api.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jyogi-web/ptera-api/issues"
+  },
+  "homepage": "https://github.com/jyogi-web/ptera-api#readme"
+}

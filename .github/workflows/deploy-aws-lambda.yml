@@ -79,12 +79,13 @@ jobs:
             ./**/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-build-deploy
 
-      - name: Install zig
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
           cache: "npm"
-      - run: npm install -g @ziglang/cli
+
+      - name: Install zig
+        run: npm install -g @ziglang/cli
 
       - name: Install lambda
         if: steps.cache-build-deploy.outputs.cache-hit != 'true'
