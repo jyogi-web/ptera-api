@@ -109,8 +109,8 @@ jobs:
 
       - name: Decode secret file .env
         env:
-          DOTENV_ENCODE: ${{ secrets.DOTENV_ENCODED }}
-        run: echo $DOTEND_ENCODE | base64 --decode > .env
+          DOTENV_ENCODED: ${{ secrets.DOTENV_ENCODED }}
+        run: echo $DOTENV_ENCODED | base64 --decode > .env
 
       - name: Lambda deploy
         uses: actions-rs/cargo@v1
