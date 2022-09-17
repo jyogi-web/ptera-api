@@ -2,6 +2,7 @@ use std::{env, future::Future, sync::Arc};
 
 use async_once_cell::{Lazy as AsyncLazy, OnceCell};
 use aws_sdk_dynamodb::{model::AttributeValue, Client};
+use fancy_regex::Regex;
 use lambda_http::{
     http::{request, Method},
     request::RequestContext,
@@ -13,7 +14,6 @@ use ptera_api::{
     service_handler::{get_rate_handler, post_rate_handler, put_rate_handler},
     CLIENT, CONFIG,
 };
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use simplelog::{CombinedLogger, ConfigBuilder, TermLogger};
@@ -49,22 +49,23 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         unreachable!()
     };
 
-    static RATE: Lazy<Regex> = Lazy::new(|| Regex::new("^/.*/rate").unwrap());
+    static RATE: Lazy<Regex> = Lazy::new(|| Regex::new("^/\\w+(?=/)").unwrap());
+    let resource_path = RATE.replace(&resource_path, "");
 
-    let resp = match (event.method(), RATE.is_match(&resource_path)) {
-        (&Method::GET, true) => {
+    let resp = match (event.method(), resource_path.as_ref()) {
+        (&Method::GET, "/rate") => {
             log::debug!("GET /rate");
             get_rate_handler(&event).await?
         }
-        (&Method::POST, true) => {
+        (&Method::POST, "/rate") => {
             log::debug!("POST /rate");
             post_rate_handler(&event).await?
         }
-        (&Method::PUT, true) => {
+        (&Method::PUT, "/rate") => {
             log::debug!("PUT /rate");
             put_rate_handler(&event).await?
         }
-        (&Method::DELETE, true) => {
+        (&Method::DELETE, "/rate") => {
             log::debug!("DELETE /rate");
             todo!()
         }
