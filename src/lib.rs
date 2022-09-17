@@ -1,5 +1,9 @@
+mod entity;
+mod infrastructure;
 pub mod service_handler;
 
+use async_once_cell::OnceCell;
+use aws_sdk_dynamodb::Client;
 use dotenv::dotenv;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
@@ -16,3 +20,5 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     }
     envy::from_env().unwrap()
 });
+
+pub static CLIENT: OnceCell<Client> = async_once_cell::OnceCell::new();
