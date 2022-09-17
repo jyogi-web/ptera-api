@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::{collections::HashMap, convert::TryFrom};
 
 use anyhow::{Context, Result};
 use aws_sdk_dynamodb::model::AttributeValue;
@@ -28,4 +28,72 @@ pub(crate) async fn get_rate(id: &str) -> Result<RateInfo> {
     let rate_info = RateInfo::try_from(item_hash_map)?;
 
     Ok(rate_info)
+}
+
+pub(crate) async fn insert_rate(insert_rate_info: &RateInfo) -> Result<()> {
+    let insert_item = CLIENT
+        .get()
+        .unwrap()
+        .put_item()
+        .table_name(&CONFIG.table_name)
+        .item(
+            "user_id",
+            AttributeValue::S(insert_rate_info.user_id.to_string()),
+        )
+        .item(
+            "user_name",
+            AttributeValue::S(insert_rate_info.user_name.to_string()),
+        )
+        .item("rate", AttributeValue::N(insert_rate_info.rate.to_string()));
+
+    insert_item
+        .send()
+        .await
+        .context("Failed to insert_rate send()")?;
+
+    Ok(())
+}
+
+pub(crate) async fn update_rate(update_rate_info: &RateInfo) -> Result<()> {
+    let update_item = CLIENT
+        .get()
+        .unwrap()
+        .update_item()
+        .table_name(&CONFIG.table_name)
+        .key(
+            "user_id",
+            AttributeValue::S(update_rate_info.user_id.to_string()),
+        )
+        .update_expression("SET user_name=:user_name")
+        .expression_attribute_values(
+            ":user_name",
+            AttributeValue::S(update_rate_info.user_name.to_string()),
+        );
+
+    update_item
+        .send()
+        .await
+        .context("Failed to update_rate send()")?;
+
+    let update_item = CLIENT
+        .get()
+        .unwrap()
+        .update_item()
+        .table_name(&CONFIG.table_name)
+        .key(
+            "user_id",
+            AttributeValue::S(update_rate_info.user_id.to_string()),
+        )
+        .update_expression("SET rate=:rate")
+        .expression_attribute_values(
+            ":rate",
+            AttributeValue::N(update_rate_info.rate.to_string()),
+        );
+
+    update_item
+        .send()
+        .await
+        .context("Failed to update_rate send()")?;
+
+    Ok(())
 }

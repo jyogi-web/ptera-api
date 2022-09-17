@@ -6,22 +6,26 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub(crate) struct RateInfo {
-    user_id: String,
-    name: String,
-    rate: u64,
+    pub(crate) user_id: String,
+    pub(crate) user_name: String,
+    pub(crate) rate: u64,
 }
 
 impl TryFrom<&HashMap<String, AttributeValue>> for RateInfo {
     type Error = anyhow::Error;
     fn try_from(value: &HashMap<String, AttributeValue>) -> Result<Self, Self::Error> {
-        let converted = match (value.get("user_id"), value.get("name"), value.get("rate")) {
-            (Some(user_id), Some(name), Some(rate)) => {
+        let converted = match (
+            value.get("user_id"),
+            value.get("user_name"),
+            value.get("rate"),
+        ) {
+            (Some(user_id), Some(user_name), Some(rate)) => {
                 let user_id = if let AttributeValue::S(u) = user_id {
                     u.to_string()
                 } else {
                     bail!("Not match user_id AttributeValue.");
                 };
-                let name = if let AttributeValue::S(n) = name {
+                let user_name = if let AttributeValue::S(n) = user_name {
                     n.to_string()
                 } else {
                     bail!("Not match name AttributeValue.");
@@ -34,7 +38,7 @@ impl TryFrom<&HashMap<String, AttributeValue>> for RateInfo {
 
                 Ok(Self {
                     user_id,
-                    name,
+                    user_name,
                     rate,
                 })
             }
