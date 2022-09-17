@@ -1,5 +1,6 @@
-use std::env;
+use std::{env, future::Future, sync::Arc};
 
+use async_once_cell::{Lazy as AsyncLazy, OnceCell};
 use aws_sdk_dynamodb::{model::AttributeValue, Client};
 use lambda_http::{
     http::{request, Method},
@@ -8,27 +9,17 @@ use lambda_http::{
 };
 use log::LevelFilter;
 use once_cell::sync::Lazy;
-use ptera_api::{service_handler::get_rate, CONFIG};
+use ptera_api::{service_handler::get_rate_handler, CLIENT, CONFIG};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use simplelog::{CombinedLogger, ConfigBuilder, TermLogger};
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-struct RateInfo {
-    uuid: String,
-    rate: u64,
-    name: String,
-}
 
 /// This is the main body for the function.
 /// Write your code inside it.
 /// There are some code example in the following URLs:
 /// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
 async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    let shared_config = aws_config::load_from_env().await;
-    let client = Client::new(&shared_config);
-
     // let request = client
     //     .put_item()
     //     .table_name(&table_name)
@@ -60,7 +51,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     let resp = match (event.method(), RATE.is_match(&resource_path)) {
         (&Method::GET, true) => {
             log::debug!("GET /rate");
-            get_rate(&event)?
+            get_rate_handler(&event).await?
         }
         (&Method::POST, true) => {
             log::debug!("POST /rate");
@@ -138,6 +129,13 @@ async fn main() -> Result<(), Error> {
         // disabling time is handy because CloudWatch will add the ingestion time.
         .without_time()
         .init();
+
+    CLIENT
+        .get_or_init(async {
+            let shared_config = aws_config::load_from_env().await;
+            Client::new(&shared_config)
+        })
+        .await;
 
     run(service_fn(function_handler)).await
 }
