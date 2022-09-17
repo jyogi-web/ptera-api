@@ -29,3 +29,47 @@ pub(crate) async fn get_rate(id: &str) -> Result<RateInfo> {
 
     Ok(rate_info)
 }
+
+pub(crate) async fn insert_rate(insert_rate_info: &RateInfo) -> Result<()> {
+    let insert_item = CLIENT
+        .get()
+        .unwrap()
+        .put_item()
+        .table_name(&CONFIG.table_name)
+        .item(
+            "user_id",
+            AttributeValue::S(insert_rate_info.user_id.to_string()),
+        )
+        .item("name", AttributeValue::S(insert_rate_info.name.to_string()))
+        .item("rate", AttributeValue::N(insert_rate_info.rate.to_string()));
+
+    insert_item
+        .send()
+        .await
+        .context("Failed to insert_rate send()")?;
+
+    Ok(())
+}
+
+pub(crate) async fn update_rate(update_rate_info: &RateInfo) -> Result<()> {
+    let update_item = CLIENT
+        .get()
+        .unwrap()
+        .update_item()
+        .table_name(&CONFIG.table_name)
+        .key(
+            "user_id",
+            AttributeValue::S(update_rate_info.user_id.to_string()),
+        )
+        .update_expression("set rate = :rate")
+        .expression_attribute_values(
+            ":rate",
+            AttributeValue::N(update_rate_info.rate.to_string()),
+        );
+
+    update_item
+        .send()
+        .await
+        .context("Failed to update_rate send()")?;
+    Ok(())
+}

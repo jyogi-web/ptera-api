@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub(crate) struct RateInfo {
-    user_id: String,
-    name: String,
-    rate: u64,
+    pub(crate) user_id: String,
+    pub(crate) name: String,
+    pub(crate) rate: u64,
 }
 
 impl TryFrom<&HashMap<String, AttributeValue>> for RateInfo {

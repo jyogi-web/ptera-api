@@ -9,7 +9,10 @@ use lambda_http::{
 };
 use log::LevelFilter;
 use once_cell::sync::Lazy;
-use ptera_api::{service_handler::get_rate_handler, CLIENT, CONFIG};
+use ptera_api::{
+    service_handler::{get_rate_handler, post_rate_handler, put_rate_handler},
+    CLIENT, CONFIG,
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -55,11 +58,11 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         }
         (&Method::POST, true) => {
             log::debug!("POST /rate");
-            todo!()
+            post_rate_handler(&event).await?
         }
         (&Method::PUT, true) => {
             log::debug!("PUT /rate");
-            todo!()
+            put_rate_handler(&event).await?
         }
         (&Method::DELETE, true) => {
             log::debug!("DELETE /rate");
