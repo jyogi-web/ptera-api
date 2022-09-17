@@ -58,7 +58,9 @@ pub(crate) async fn update_rate(update_rate_info: &RateInfo) -> Result<()> {
     let current_rate = get_rate(&update_rate_info.user_id).await?.rate;
     ensure!(
         update_rate_info.rate.abs_diff(current_rate) >= 1000,
-        "[Invalid value] update_rate_info.rate"
+        "[Invalid value] update_rate_info.rate. current: {}, update: {}",
+        current_rate,
+        update_rate_info.rate
     );
 
     let update_item = CLIENT
