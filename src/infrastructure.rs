@@ -57,10 +57,11 @@ pub(crate) async fn insert_rate(insert_rate_info: &RateInfo) -> Result<()> {
 pub(crate) async fn update_rate(update_rate_info: &RateInfo) -> Result<()> {
     let current_rate = get_rate(&update_rate_info.user_id).await?.rate;
     ensure!(
-        update_rate_info.rate.abs_diff(current_rate) >= 1000,
-        "[Invalid value] update_rate_info.rate. current: {}, update: {}",
+        update_rate_info.rate.abs_diff(current_rate) <= CONFIG.max_delta_rate,
+        "[Invalid value] update_rate_info.rate. current is {}, update is {}, max_delta_rate is {}",
         current_rate,
-        update_rate_info.rate
+        update_rate_info.rate,
+        CONFIG.max_delta_rate
     );
 
     let update_item = CLIENT

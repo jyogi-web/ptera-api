@@ -12,6 +12,7 @@ use serde::Deserialize;
 pub struct Config {
     pub region: String,
     pub table_name: String,
+    pub max_delta_rate: u64,
 }
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
