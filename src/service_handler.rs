@@ -9,6 +9,8 @@ use crate::{
     infrastructure::{get_rate, insert_rate, update_rate},
 };
 
+const DEFAULT_RATE: u64 = 0;
+
 pub async fn get_rate_handler(event: &Request) -> Result<Response<Body>> {
     let id = event.headers().get("ptera-id").unwrap().to_str().unwrap();
 
@@ -27,8 +29,9 @@ pub async fn get_rate_handler(event: &Request) -> Result<Response<Body>> {
 pub async fn post_rate_handler(event: &Request) -> Result<Response<Body>> {
     let insert_rate_info =
         String::from_utf8(event.body().to_vec()).context("Failed to vec to String")?;
-    let insert_rate_info: RateInfo =
+    let mut insert_rate_info: RateInfo =
         serde_json::from_str(&insert_rate_info).context("Failed to str to json")?;
+    insert_rate_info.rate = DEFAULT_RATE;
     log::debug!("[Body] {:#?}", insert_rate_info);
 
     insert_rate(&insert_rate_info).await?;
