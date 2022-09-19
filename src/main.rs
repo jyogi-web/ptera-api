@@ -69,6 +69,10 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
             log::debug!("DELETE /rate");
             todo!()
         }
+        (&Method::POST, "/rate/calculation") => {
+            log::debug!("POST /rate/calculation");
+            todo!()
+        }
         _ => Response::builder()
             .status(200)
             .header("content-type", "application/json")
