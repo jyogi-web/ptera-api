@@ -102,12 +102,11 @@ pub async fn post_rate_calculation_handler(event: &Request) -> Result<Response<B
 }"#,
     )
     .unwrap();
-    log::debug!("{:?}", r);
-    log::debug!("{:?}", serde_json::to_string(&r).unwrap());
-    todo!();
+    // log::debug!("{:?}", r);
+    // log::debug!("{:?}", serde_json::to_string(&r).unwrap());
     let rate_info_list =
         String::from_utf8(event.body().to_vec()).context("Failed to vec to String")?;
-    log::debug!("{:?}", rate_info_list.trim());
+    log::debug!("{:?}", rate_info_list);
     let mut rate_info_list: RateInfoList =
         serde_json::from_str(&rate_info_list).context("Failed to str to json")?;
 
@@ -121,6 +120,7 @@ pub async fn post_rate_calculation_handler(event: &Request) -> Result<Response<B
         rate_info_list[1].rate = win;
     } else {
         // 不正なリクエスト
+        log::debug!("json format is invalid.");
         return Ok(Response::builder()
             .status(400)
             .header("content-type", "application/json")
@@ -132,6 +132,8 @@ pub async fn post_rate_calculation_handler(event: &Request) -> Result<Response<B
             .context("Failed to Response body.")?);
     }
 
+    log::debug!("rate[0] {:?}", &rate_info_list[0]);
+    log::debug!("rate[1] {:?}", &rate_info_list[1]);
     update_rate(&rate_info_list[0]).await?;
     update_rate(&rate_info_list[1]).await?;
 
