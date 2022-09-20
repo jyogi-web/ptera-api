@@ -1,5 +1,9 @@
 use anyhow::{bail, Context};
-use std::{collections::HashMap, convert::TryFrom};
+use std::{
+    collections::HashMap,
+    convert::TryFrom,
+    ops::{Index, IndexMut},
+};
 
 use aws_sdk_dynamodb::model::AttributeValue;
 use serde::{Deserialize, Serialize};
@@ -48,5 +52,23 @@ impl TryFrom<&HashMap<String, AttributeValue>> for RateInfo {
         };
 
         converted
+    }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub(crate) struct RateInfoList {
+    pub(crate) rate_info_list: Vec<RateInfo>,
+}
+
+impl Index<usize> for RateInfoList {
+    type Output = RateInfo;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.rate_info_list[index]
+    }
+}
+
+impl IndexMut<usize> for RateInfoList {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.rate_info_list[index]
     }
 }
