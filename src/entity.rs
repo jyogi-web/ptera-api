@@ -9,6 +9,7 @@ pub(crate) struct RateInfo {
     pub(crate) user_id: String,
     pub(crate) user_name: String,
     pub(crate) rate: u64,
+    pub(crate) is_winner: Option<bool>,
 }
 
 impl TryFrom<&HashMap<String, AttributeValue>> for RateInfo {
@@ -40,6 +41,7 @@ impl TryFrom<&HashMap<String, AttributeValue>> for RateInfo {
                     user_id,
                     user_name,
                     rate,
+                    is_winner: None,
                 })
             }
             _ => bail!("Not Found key item"),
