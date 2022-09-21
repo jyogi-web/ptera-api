@@ -50,6 +50,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     };
 
     static RATE: Lazy<Regex> = Lazy::new(|| Regex::new("^/\\w+(?=/)").unwrap());
+    // stage名を削除
     let resource_path = RATE.replace(&resource_path, "");
 
     let resp = match (event.method(), resource_path.as_ref()) {
