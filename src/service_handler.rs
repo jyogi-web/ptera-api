@@ -5,7 +5,8 @@ use lambda_http::{Body, Request, Response};
 use serde_json::json;
 
 use crate::{
-    entity::RateInfo,
+    bll::rate_calculation,
+    entity::{RateInfo, RateInfoList},
     infrastructure::{get_rate, insert_rate, update_rate},
 };
 
@@ -82,5 +83,65 @@ pub async fn put_rate_handler(event: &Request) -> Result<Response<Body>> {
 }
 
 pub async fn post_rate_calculation_handler(event: &Request) -> Result<Response<Body>> {
-    todo!()
+    let r: RateInfoList = serde_json::from_str(
+        r#"{
+    "rate_info_list": [
+        {
+            "user_id": "3d03c5e3-d771-4cf5-b6fa-76f9255101fc",
+            "user_name": "test1",
+            "rate": 550,
+            "is_winner": true
+        },
+        {
+            "user_id": "a8d13189-351d-42ab-8c5e-1c1fcd7a8a81",
+            "user_name": "test2",
+            "rate": 400,
+            "is_winner": false
+        }
+    ]
+}"#,
+    )
+    .unwrap();
+    // log::debug!("{:?}", r);
+    // log::debug!("{:?}", serde_json::to_string(&r).unwrap());
+    let rate_info_list =
+        String::from_utf8(event.body().to_vec()).context("Failed to vec to String")?;
+    log::debug!("{:?}", rate_info_list);
+    let mut rate_info_list: RateInfoList =
+        serde_json::from_str(&rate_info_list).context("Failed to str to json")?;
+
+    if rate_info_list[0].is_winner.unwrap_or_default() {
+        let (win, lose) = rate_calculation(rate_info_list[0].rate, rate_info_list[1].rate);
+        rate_info_list[0].rate = win;
+        rate_info_list[1].rate = lose;
+    } else if rate_info_list[1].is_winner.unwrap_or_default() {
+        let (win, lose) = rate_calculation(rate_info_list[1].rate, rate_info_list[0].rate);
+        rate_info_list[0].rate = lose;
+        rate_info_list[1].rate = win;
+    } else {
+        // 不正なリクエスト
+        log::debug!("json format is invalid.");
+        return Ok(Response::builder()
+            .status(400)
+            .header("content-type", "application/json")
+            .body(
+                json!({"message": "json format is invalid."})
+                    .to_string()
+                    .into(),
+            )
+            .context("Failed to Response body.")?);
+    }
+
+    log::debug!("rate[0] {:?}", &rate_info_list[0]);
+    log::debug!("rate[1] {:?}", &rate_info_list[1]);
+    update_rate(&rate_info_list[0]).await?;
+    update_rate(&rate_info_list[1]).await?;
+
+    let resp = Response::builder()
+        .status(200)
+        .header("content-type", "application/json")
+        .body(json!({"message": "success"}).to_string().into())
+        .context("Failed to Response body.")?;
+
+    Ok(resp)
 }

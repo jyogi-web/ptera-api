@@ -11,7 +11,9 @@ use lambda_http::{
 use log::LevelFilter;
 use once_cell::sync::Lazy;
 use ptera_api::{
-    service_handler::{get_rate_handler, post_rate_handler, put_rate_handler},
+    service_handler::{
+        get_rate_handler, post_rate_calculation_handler, post_rate_handler, put_rate_handler,
+    },
     CLIENT, CONFIG,
 };
 use serde::{Deserialize, Serialize};
@@ -72,7 +74,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         }
         (&Method::POST, "/rate/calculation") => {
             log::debug!("POST /rate/calculation");
-            todo!()
+            post_rate_calculation_handler(&event).await?
         }
         _ => Response::builder()
             .status(200)
