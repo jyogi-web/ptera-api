@@ -116,7 +116,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: lambda
-          args: deploy --iam-role ${{ secrets.IAM }} --env-file .env
+          args: deploy --iam-role ${{ secrets.IAM }} --env-file .env --enable-function-url
 
       - name: Bump version and push tag
         uses: mathieudutour/github-tag-action@v6.0
