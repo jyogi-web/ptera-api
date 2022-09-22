@@ -119,17 +119,19 @@ pub async fn post_rate_calculation_handler(event: &Request) -> Result<Response<B
         rate_info_list[0].rate = lose;
         rate_info_list[1].rate = win;
     } else {
+        // NOTE: 不正ではなくなった
+        // レートは更新しない
         // 不正なリクエスト
-        log::debug!("json format is invalid.");
-        return Ok(Response::builder()
-            .status(400)
-            .header("content-type", "application/json")
-            .body(
-                json!({"message": "json format is invalid."})
-                    .to_string()
-                    .into(),
-            )
-            .context("Failed to Response body.")?);
+        // log::debug!("json format is invalid.");
+        // return Ok(Response::builder()
+        //     .status(400)
+        //     .header("content-type", "application/json")
+        //     .body(
+        //         json!({"message": "json format is invalid."})
+        //             .to_string()
+        //             .into(),
+        //     )
+        //     .context("Failed to Response body.")?);
     }
 
     log::debug!("rate[0] {:?}", &rate_info_list[0]);
