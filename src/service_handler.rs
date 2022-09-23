@@ -20,13 +20,6 @@ pub async fn get_rate_handler(event: &Request) -> Result<Response<Body>> {
         Ok(rate_info) => Response::builder()
             .status(200)
             .header("content-type", "application/json")
-            .header("Access-Control-Allow-Credentials", "true")
-            .header(
-                "Access-Control-Allow-Headers",
-                "Accept, X-Access-Token, X-Application-Name, X-Request-Sent-Time, ptera-id",
-            )
-            .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            .header("Access-Control-Allow-Origin", "*")
             .body(json!(rate_info).to_string().into())
             .context("Failed to Response body.")?,
         Err(e) => {
